@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Configuration;
+
 
 namespace API
 {
@@ -21,6 +23,7 @@ namespace API
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+                    webBuilder.UseUrls(ConfigurationManager.AppSettings.Get("url"));
                 });
     }
 }
