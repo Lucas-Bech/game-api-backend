@@ -12,6 +12,10 @@ namespace GameAPILibrary.Resources
         public uint Id { get => _id; set => _id = value; }
         public string Name { get => _name; set => _name = value; }
 
+        public Publisher(string name)
+        {
+            Name = name;
+        }
         public Publisher(uint id, string name)
         {
             _id = id;

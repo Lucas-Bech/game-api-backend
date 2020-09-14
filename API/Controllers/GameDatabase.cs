@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using GameAPILibrary;
 using GameAPILibrary.Resources.Data;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
@@ -32,47 +34,79 @@ namespace API.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/<GameDatabase>/5
-        [HttpGet("{id}")]
-        public async Task<string> Get(uint id)
+        // GET api/<GameDatabase>/game/{id},{dlc}
+        [HttpGet("game/")]
+        public async Task<string> Get(
+            [FromQuery(Name = "id")] uint id,
+            [FromQuery(Name = "dlc")] bool dlc = false)
         {
-            var app = await _service.GetApp(id);
+            var app = await _service.GetAppFromCache(id);
 
             if (app is null)
                 return "No App with specified ID";
             else
-                return JsonConvert.SerializeObject(app);
+            {
+                if (dlc)
+                    app.DLC = await _service.GetDLCs(app.Id);
+
+                return JsonConvert.SerializeObject(app, Formatting.Indented);
+            }
+        }
+
+        // GET api/<GameDatabase>/game/{id},{dlc}
+        [HttpGet("dlc/")]
+        public async Task<string> Get(
+            [FromQuery(Name = "id")] uint id)
+        {
+            var app = await _service.GetDLCFromCache(id);
+
+            if (app is null)
+                return "No DLC with specified ID";
+            else
+            {
+                app.SerializeDLC = false;
+                return JsonConvert.SerializeObject(app, Formatting.Indented);
+            }
         }
 
 
         // POST api/gamedatabase/test/{parameter}
-        [HttpGet("test/{parameter}")]
+        [Microsoft.AspNetCore.Mvc.HttpGet("test/{parameter}")]
         public async Task<string> Test(string parameter)
         {
-            List<uint> AppIds = new List<uint>();
-            string result = ""; 
+            DataSet ds = new DataSet();
+            List<App> result = new List<App>();
             string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
+
             using (MySqlConnection connection = new MySqlConnection(ConnectionString))
             {
                 string sql = $"SELECT app.id FROM gameapi.app WHERE name LIKE '%{parameter}%'";
+
                 connection.Open();
+
                 using (MySqlCommand cmd = new MySqlCommand(sql, connection))
                 {
-                    var reader = cmd.ExecuteReader();
-
-                    while(reader.Read())
+                    //Saving it to adapter as to avoid doing two loops to get data.
+                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
                     {
-                        AppIds.Add(Convert.ToUInt32(reader.GetValue(0)));
+                        adapter.Fill(ds);
                     }
                 }
             }
 
-            foreach (uint i in AppIds)
+            using (DataTableReader reader = ds.CreateDataReader())
             {
-                var app = await _service.GetApp(i);
-                result += $"{app.ToString()}\n\n";
+                int x = 0;
+                //Limit the results to 1000 games.
+                while (reader.Read() && x < 1000)
+                {
+                    var app = await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
+                    result.Add(app);
+                    x++;
+                }
             }
-            return result;
+
+            return JsonConvert.SerializeObject(result, Formatting.Indented);
         }
 
 
