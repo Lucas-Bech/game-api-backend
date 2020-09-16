@@ -28,12 +28,8 @@ namespace GameAPILibrary.Resources.Data
             LogHandler.Invoke(this, new LogEventArgs(message));
         }
 
-        public async Task<App> GetAppFromCache(uint appId)
+        public async Task<IApp> GetAppFromCache(uint appId, bool isDLC = false)
         {
-            await Task.Yield();
-
-            var result = new App();
-            
             try
             {
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
@@ -48,44 +44,46 @@ namespace GameAPILibrary.Resources.Data
                     $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
                     $" LEFT JOIN category c ON c.id = ac.category_id" +
                     $" WHERE app.id = {appId}";
-                    result = conn.Query<App>(sql).FirstOrDefault();
+
+                    if(isDLC)
+                    {
+                        sql = $"{sql} AND EXISTS(SELECT app_id FROM dlc WHERE app_id = app.id);";
+                        return (await conn.QueryAsync<DLC>(sql)).FirstOrDefault();
+                    }
+                    else
+                        return (await conn.QueryAsync<App>(sql)).FirstOrDefault();
                 }
             }
             catch (Exception ex) { Log(ex.Message); };
 
-            return result;
+            return null;
         }
 
-        public async Task<App> GetDLCFromCache(uint appId)
+        public async Task<List<DLC>> GetDLCsFromCache(uint appId)
         {
-            await Task.Yield();
-
-            var result = new App();
-
+            List<DLC> dlc = new List<DLC>();
+            List<uint> dlcIDs = new List<uint>();
             try
             {
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    string sql = $"SELECT app.id, app.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, ag.genre_id, ac.category_id" +
-                    $" FROM app" +
-                    $" LEFT JOIN developer d ON d.id = app.developer_id" +
-                    $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
-                    $" LEFT JOIN app_genre ag ON ag.app_id = app.id" +
-                    $" LEFT JOIN genre g ON g.id = ag.genre_id" +
-                    $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
-                    $" LEFT JOIN category c ON c.id = ac.category_id" +
-                    $" INNER JOIN dlc ON dlc.app_id = app.id" +
-                    $" WHERE app.id = {appId}";
-                    result = conn.Query<App>(sql).FirstOrDefault();
+                    string sql = $"SELECT app_id as id FROM dlc" +
+                                 $" WHERE base_app_id = {appId}";
+
+                    dlcIDs = (await conn.QueryAsync<uint>(sql)).ToList();
                 }
             }
             catch (Exception ex) { Log(ex.Message); };
 
-            return result;
+            foreach (uint dlcID in dlcIDs)
+            {
+                dlc.Add((DLC)(await GetAppFromCache(dlcID, true)));
+            }
+            return dlc;
         }
 
-        public async Task<App> GetAppFromApi(uint appId)
+        private async Task<App> GetAppFromApi(uint appId)
         {
             string appDetailsUrl = $"https://store.steampowered.com/api/appdetails/?appids={appId}";
             string json = "";
@@ -107,7 +105,8 @@ namespace GameAPILibrary.Resources.Data
             return null;
         }
 
-        public async Task<App> CacheApp(uint appId)
+        //unfinished, missing caching of certain values
+        public async Task<bool> CacheApp(uint appId)
         {
             App app = await GetAppFromApi(appId);
 
@@ -121,40 +120,23 @@ namespace GameAPILibrary.Resources.Data
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
+                    uint appID = app.Id;
+                    string name = app.Name;
+                    List<uint> dlcIDs = app.DLCIDs;
+                    uint developerID = 1;
+                    uint publisherID = 1;
+                    bool comingSoon = app.ReleaseDate.ComingSoon;
+                    DateTime releaseDate = app.ReleaseDate.Date;
+
                     string cacheApp = $"";
                     await conn.ExecuteAsync(cacheApp);
                 }
+                return true;
             }
             catch (Exception ex) { Log(ex.Message); };
 
-            return null;
+            return false;
         }
 
-        public async Task<List<DLC>> GetDLCs(uint appId, App baseApp = null)
-        {
-            List<DLC> dlc = new List<DLC>();
-            try
-            {
-                string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
-                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
-                {
-                    string sql = $"SELECT app_id as id FROM dlc" +
-                                 $" WHERE base_app_id = {appId}";
-
-                    dlc = (await conn.QueryAsync<DLC>(sql)).ToList();
-                }
-            }
-            catch (Exception ex) { Log(ex.Message); };
-
-            if(!(baseApp is null))
-            {
-                foreach(DLC tempDLC in dlc)
-                {
-                    tempDLC.BaseApp = baseApp;
-                }
-            }
-
-            return dlc;
-        }
     }
 }

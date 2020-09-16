@@ -14,19 +14,19 @@ namespace GameAPILibrary.Resources.Data
 
         ///<summary>
         ///Returns App with specified ID if exists
+        ///If isDLC is set to true, returns DLC
         ///</summary>
-        public Task<App> GetAppFromCache(uint appId);
+        public Task<IApp> GetAppFromCache(uint appId, bool isDLC = false);
+
         ///<summary>
-        ///Returns DLC with specified ID if exists
+        ///Gets DLCs for specified appId. If baseApp is passed the DLC's will contain a reference to said app
         ///</summary>
-        public Task<App> GetDLCFromCache(uint appId);
+        public Task<List<DLC>> GetDLCsFromCache(uint appId);
+
         ///<summary>
-        ///Caches data to the database
+        ///Caches data related to specified app to the database
         ///</summary>
-        public Task<App> CacheApp(uint appId);
-        ///<summary>
-        ///Gets DLC ID's for specified app
-        ///</summary>
-        public Task<List<DLC>> GetDLCs(uint appId, App baseApp = null);
+        public Task<bool> CacheApp(uint appId);
+
     }
 }

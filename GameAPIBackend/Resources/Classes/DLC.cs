@@ -2,14 +2,12 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Serialization;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace GameAPILibrary
 {
-
-    public class App
+    public class DLC : IApp
     {
         private uint _id;
         private string _name;
@@ -18,7 +16,7 @@ namespace GameAPILibrary
         private ReleaseInfo _releaseDate;
         private List<Genre> _genres;
         private List<Category> _categories;
-        private List<DLC> _dlc = new List<DLC>();
+        private App _baseApp = null;
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -41,23 +39,42 @@ namespace GameAPILibrary
         [JsonProperty("categories")]
         public List<Category> Categories { get => _categories; set => _categories = value; }
 
-        [JsonProperty("dlc", Required = Required.Default)]
-        public List<DLC> DLC { get => _dlc; set => _dlc = value; }
 
         [JsonIgnore]
-        public bool SerializeDLC = true;
-        public bool ShouldSerializeDLC()
+        public App BaseApp { get => _baseApp;}
+
+        //If baseapp isnt defined, it will return null. 
+        //Newtonsoft Json will then ignore the property
+        [JsonProperty("base_app_id", NullValueHandling = NullValueHandling.Ignore)]
+        public uint? BaseAppId
         {
-            return SerializeDLC;
+            get
+            {
+                if (!(BaseApp is null))
+                    return BaseApp.Id;
+                else
+                    return null;
+            }
         }
 
-        public App()
+        public DLC()
         {
 
         }
 
-        public App(
-            uint id,
+        public DLC(uint id)
+        {
+            Id = id;
+        }
+
+        public DLC(uint id, App baseApp)
+        {
+            Id = id;
+            SetBaseApp(baseApp);
+        }
+
+        [JsonConstructor]
+        public DLC(uint id,
             string name,
             List<Developer> developers,
             List<Publisher> publishers,
@@ -74,24 +91,9 @@ namespace GameAPILibrary
             Categories = categories;
         }
 
-        public override string ToString()
+        public void SetBaseApp(App baseApp)
         {
-            string result = "";
-
-            result += $"Id: {Id}\n" +
-                $"Name: {Name}\n";
-
-            /*
-            if (Developers?.Count > 0)
-                result += $"Developer: {Developers.FirstOrDefault()}\n";
-
-            if (Publishers?.Count > 0)
-                result += $"Publisher: {Publishers.FirstOrDefault()}\n";
-            */
-
-            result += $"Releasedate: {ReleaseDate.ToString()}";
-
-            return result;
+            _baseApp = baseApp;
         }
     }
 }

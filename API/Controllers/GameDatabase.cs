@@ -34,39 +34,38 @@ namespace API.Controllers
             return new string[] { "value1", "value2" };
         }
 
-        // GET api/<GameDatabase>/game/{id},{dlc}
+        // GET api/<GameDatabase>/game/?{id}&{dlc}
         [HttpGet("game/")]
         public async Task<string> Get(
             [FromQuery(Name = "id")] uint id,
             [FromQuery(Name = "dlc")] bool dlc = false)
         {
-            var app = await _service.GetAppFromCache(id);
+            var app = (App) await _service.GetAppFromCache(id);
 
             if (app is null)
                 return "No App with specified ID";
             else
             {
                 if (dlc)
-                    app.DLC = await _service.GetDLCs(app.Id);
+                {
+                    app.SerializeDLCIDs = true;
+                    app.DLC = await _service.GetDLCsFromCache(app.Id);
+                }
 
                 return JsonConvert.SerializeObject(app, Formatting.Indented);
             }
         }
 
-        // GET api/<GameDatabase>/game/{id},{dlc}
+        // GET api/<GameDatabase>/dlc/?{id}
         [HttpGet("dlc/")]
-        public async Task<string> Get(
-            [FromQuery(Name = "id")] uint id)
+        public async Task<string> Get([FromQuery(Name = "id")] uint id)
         {
-            var app = await _service.GetDLCFromCache(id);
+            var app = (DLC) await _service.GetAppFromCache(id, true);
 
             if (app is null)
                 return "No DLC with specified ID";
             else
-            {
-                app.SerializeDLC = false;
                 return JsonConvert.SerializeObject(app, Formatting.Indented);
-            }
         }
 
 
@@ -100,7 +99,7 @@ namespace API.Controllers
                 //Limit the results to 1000 games.
                 while (reader.Read() && x < 1000)
                 {
-                    var app = await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
+                    var app = (App) await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
                     result.Add(app);
                     x++;
                 }
