@@ -4,27 +4,17 @@ using System.Text;
 
 namespace GameAPILibrary.Resources
 {
-    public class Publisher
+    public class AppType
     {
-        private string _name;
         private uint _id;
+        private string _name;
 
         public uint Id { get => _id; set => _id = value; }
         public string Name { get => _name; set => _name = value; }
 
-        public Publisher()
+        public AppType()
         {
 
-        }
-
-        public Publisher(string name)
-        {
-            Name = name;
-        }
-        public Publisher(uint id, string name)
-        {
-            _id = id;
-            _name = name;
         }
     }
 }

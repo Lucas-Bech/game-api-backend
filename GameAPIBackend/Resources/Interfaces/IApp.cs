@@ -11,6 +11,10 @@ namespace GameAPILibrary.Resources
 
         public string Name { get; set; }
 
+        public AppType Type { get; set; }
+
+        public uint RequiredAge { get; set; }
+
         public List<Developer> Developers { get; set; }
 
         public List<Publisher> Publishers { get; set; }

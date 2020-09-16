@@ -35,7 +35,7 @@ namespace GameAPILibrary.Resources.Data
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    string sql = $"SELECT app.id, app.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, ag.genre_id, ac.category_id" +
+                    string sql = $"SELECT app.id, app.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, g.id as id, g.name, ac.category_id as id, c.name" +
                     $" FROM app" +
                     $" LEFT JOIN developer d ON d.id = app.developer_id" +
                     $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
@@ -45,13 +45,35 @@ namespace GameAPILibrary.Resources.Data
                     $" LEFT JOIN category c ON c.id = ac.category_id" +
                     $" WHERE app.id = {appId}";
 
-                    if(isDLC)
+                    if (isDLC)
                     {
                         sql = $"{sql} AND EXISTS(SELECT app_id FROM dlc WHERE app_id = app.id);";
-                        return (await conn.QueryAsync<DLC>(sql)).FirstOrDefault();
+                        return (await conn.QueryAsync<DLC, Developer, Publisher, bool, DateTime?, Genre, Category, DLC>(sql,
+                            (app, dev, pub, comingSoon, releaseDate, genre, category) =>
+                            {
+                                app.Developers.Add(dev);
+                                app.Publishers.Add(pub);
+                                app.ReleaseDate = new ReleaseInfo(comingSoon, releaseDate);
+                                app.Genres.Add(genre);
+                                app.Categories.Add(category);
+                                return app;
+                            },
+                            splitOn: "id, coming_soon, release_date, id, id")).FirstOrDefault();
                     }
                     else
-                        return (await conn.QueryAsync<App>(sql)).FirstOrDefault();
+                    {
+                        return (await conn.QueryAsync<App, Developer, Publisher, bool, DateTime?, Genre, Category, App>(sql,
+                            (app, dev, pub, comingSoon, releaseDate, genre, category) =>
+                            {
+                                app.Developers.Add(dev);
+                                app.Publishers.Add(pub);
+                                app.ReleaseDate = new ReleaseInfo(comingSoon, releaseDate);
+                                app.Genres.Add(genre);
+                                app.Categories.Add(category);
+                                return app;
+                            },
+                            splitOn: "id, coming_soon, release_date, id, id")).FirstOrDefault();
+                    }
                 }
             }
             catch (Exception ex) { Log(ex.Message); };
@@ -123,10 +145,10 @@ namespace GameAPILibrary.Resources.Data
                     uint appID = app.Id;
                     string name = app.Name;
                     List<uint> dlcIDs = app.DLCIDs;
-                    uint developerID = 1;
-                    uint publisherID = 1;
+                    uint developerID = app.Developers[0].Id;
+                    uint publisherID = app.Publishers[0].Id;
                     bool comingSoon = app.ReleaseDate.ComingSoon;
-                    DateTime releaseDate = app.ReleaseDate.Date;
+                    DateTime releaseDate = (DateTime) app.ReleaseDate.Date;
 
                     string cacheApp = $"";
                     await conn.ExecuteAsync(cacheApp);

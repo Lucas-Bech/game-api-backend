@@ -14,6 +14,11 @@ namespace GameAPILibrary
         [JsonProperty("description")]
         public string Name { get => _name; set => _name = value; }
 
+        public Category()
+        {
+
+        }
+
         public Category(uint id, string name)
         {
             Id = id;

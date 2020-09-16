@@ -99,8 +99,9 @@ namespace API.Controllers
                 //Limit the results to 1000 games.
                 while (reader.Read() && x < 1000)
                 {
-                    var app = (App) await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
-                    result.Add(app);
+                    App app = (App) await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
+                    if(!(app is null))
+                        result.Add(app);
                     x++;
                 }
             }

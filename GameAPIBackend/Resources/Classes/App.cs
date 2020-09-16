@@ -13,11 +13,13 @@ namespace GameAPILibrary
     {
         private uint _id;
         private string _name;
+        private AppType _type = new AppType();
+        private uint requiredAge;
         private List<Developer> _developers = new List<Developer>();
         private List<Publisher> _publishers = new List<Publisher>();
         private ReleaseInfo _releaseDate;
-        private List<Genre> _genres;
-        private List<Category> _categories;
+        private List<Genre> _genres = new List<Genre>();
+        private List<Category> _categories = new List<Category>();
         private List<DLC> _dlc = new List<DLC>();
 
         [JsonProperty("steam_appid")]
@@ -25,6 +27,15 @@ namespace GameAPILibrary
 
         [JsonProperty("name")]
         public string Name { get => _name; set => _name = value; }
+
+        [JsonIgnore]
+        public AppType Type { get => _type; set => _type = value; }
+
+        [JsonProperty("type")]
+        public string TypeName { get => _type.Name; }
+
+        [JsonProperty("required_age")]
+        public uint RequiredAge { get => requiredAge; set => requiredAge = value; }
 
         [JsonProperty("developers")]
         public List<Developer> Developers { get => _developers; set => _developers = value; }

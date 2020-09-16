@@ -9,10 +9,11 @@ namespace GameAPILibrary.Resources
     public class ReleaseInfo
     {
         private bool _comingSoon;
-        private DateTime date;
+        private DateTime? date;
 
         public bool ComingSoon { get => _comingSoon; set => _comingSoon = value; }
-        public DateTime Date { get => date; set => date = value; }
+        
+        public DateTime? Date { get => date; set => date = value; }
 
         [JsonConstructor]
         public ReleaseInfo(bool comingSoon, string date)
@@ -21,5 +22,16 @@ namespace GameAPILibrary.Resources
             Date = DateUtils.SteamDateToDateTime(date);
         }
 
+        public ReleaseInfo(bool comingSoon, DateTime date)
+        {
+            ComingSoon = comingSoon;
+            Date = date;
+        }
+
+        public ReleaseInfo(bool comingSoon, DateTime? date)
+        {
+            ComingSoon = comingSoon;
+            Date = date;
+        }
     }
 }

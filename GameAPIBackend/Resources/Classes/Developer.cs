@@ -12,6 +12,11 @@ namespace GameAPILibrary.Resources
         public uint Id { get => _id; set => _id = value; }
         public string Name { get => _name; set => _name = value; }
 
+        public Developer()
+        {
+
+        }
+
         [JsonConstructor]
         public Developer(string name)
         {
