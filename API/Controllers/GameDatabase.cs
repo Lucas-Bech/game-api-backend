@@ -28,7 +28,7 @@ namespace API.Controllers
         public IEnumerable<string> Get()
         {
 
-            _service.CacheApp(50);
+            _service.CacheApp(919640);
 
 
             return new string[] { "value1", "value2" };

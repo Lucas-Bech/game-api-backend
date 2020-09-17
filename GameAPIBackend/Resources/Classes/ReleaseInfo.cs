@@ -11,8 +11,10 @@ namespace GameAPILibrary.Resources
         private bool _comingSoon;
         private DateTime? date;
 
+        [JsonProperty("coming_soon")]
         public bool ComingSoon { get => _comingSoon; set => _comingSoon = value; }
-        
+
+        [JsonProperty("date")]
         public DateTime? Date { get => date; set => date = value; }
 
         [JsonConstructor]

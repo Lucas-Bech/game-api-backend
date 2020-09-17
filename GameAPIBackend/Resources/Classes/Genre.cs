@@ -10,7 +10,7 @@ namespace GameAPILibrary
         private uint _id;
         private string _name;
 
-        
+        [JsonProperty("id")]
         public uint Id { get => _id; set => _id = value; }
         [JsonProperty("description")]
         public string Name { get => _name; set => _name = value; }

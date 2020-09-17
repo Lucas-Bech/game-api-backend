@@ -12,11 +12,14 @@ namespace GameAPILibrary.APIMappers
     {
         private uint _id;
         private string _name;
+        private uint _requiredAge;
+        private string _type;
         private List<string> _developers = new List<string>();
         private List<string> _publishers = new List<string>();
         private ReleaseInfo _releaseDate;
-        private List<Genre> _genres;
-        private List<Category> _categories;
+        private List<Genre> _genres = new List<Genre>();
+        private List<Category> _categories = new List<Category>();
+        private List<uint> _dlc = new List<uint>();
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -24,10 +27,16 @@ namespace GameAPILibrary.APIMappers
         [JsonProperty("name")]
         public string Name { get => _name; set => _name = value; }
 
-        [JsonProperty("Developers")]
+        [JsonProperty("required_age")]
+        public uint RequiredAge { get => _requiredAge; set => _requiredAge = value; }
+
+        [JsonProperty("type")]
+        public string Type { get => _type; set => _type = value; }
+
+        [JsonProperty("developers")]
         public List<string> Developers { get => _developers; set => _developers = value; }
 
-        [JsonProperty("Publishers")]
+        [JsonProperty("publishers")]
         public List<string> Publishers { get => _publishers; set => _publishers = value; }
 
         [JsonProperty("release_date")]
@@ -36,6 +45,9 @@ namespace GameAPILibrary.APIMappers
         public List<Genre> Genres { get => _genres; set => _genres = value; }
 
         public List<Category> Categories { get => _categories; set => _categories = value; }
+
+        [JsonProperty("dlc")]
+        public List<uint> DLC { get => _dlc; set => _dlc = value; }
 
 
         public AppDetails()
@@ -78,6 +90,14 @@ namespace GameAPILibrary.APIMappers
             }
 
             App app = new App(Id, Name, devs, pubs, ReleaseDate, Genres, Categories);
+            app.Type.Name = Type;
+
+            foreach(uint i in DLC)
+            {
+                app.DLC.Add(new DLC(i));
+            }
+
+            app.RequiredAge = RequiredAge;
 
             return app;
         }
