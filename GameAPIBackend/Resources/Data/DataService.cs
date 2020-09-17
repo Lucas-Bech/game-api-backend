@@ -126,7 +126,30 @@ namespace GameAPILibrary.Resources.Data
             return null;
         }
 
-        //unfinished, missing caching of certain values
+
+        public async Task<bool> CacheIfOverdue(uint appID)
+        {
+            try
+            {
+                DateTime? date;
+                string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
+                using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+                {
+                    var param = new { appID = appID };
+                    string sql = "SELECT last_caching_datetime FROM app WHERE id = @appID";
+                    date = (await conn.QueryAsync<DateTime>(sql, param)).FirstOrDefault();
+                }
+
+                if(date < DateTime.Now.ToUniversalTime().AddHours(1))
+                {
+                    await CacheApp(appID);
+                    return true;
+                }
+            }
+            catch (Exception ex) { Log(ex.Message); }
+            return false;
+        }
+
         public async Task<bool> CacheApp(uint appId)
         {
             App app = await GetAppFromApi(appId);

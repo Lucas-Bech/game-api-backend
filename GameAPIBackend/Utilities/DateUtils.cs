@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace GameAPILibrary.Utilities
@@ -9,14 +10,32 @@ namespace GameAPILibrary.Utilities
     {
         public static DateTime SteamDateToDateTime(string steamDate)
         {
-            //Steam doesn't always provide the wanted format
-            //This will add a 0 to the date if the day is 1-9 (1, 2, 3 etc.)
-            //Such that it becomes (01, 02, 03 etc.)
-            if (steamDate.Split(" ")[0].Length < 2)
-                steamDate = "0" + steamDate;
+            try
+            {
+                //Steam doesn't always provide the wanted format, so we do multiple checks
+                
+                if (steamDate.Contains(','))
+                    steamDate = steamDate.Replace(",", "");
 
-            var date = DateTime.ParseExact(steamDate, "dd MMM, yyyy", CultureInfo.InvariantCulture);
-            return date;
+                if (steamDate.Split(" ")[0].Length < 2)
+                    steamDate = "0" + steamDate;
+
+                try
+                {
+                    var date = DateTime.ParseExact(steamDate, "dd MMM yyyy", CultureInfo.InvariantCulture);
+                    return date;
+                }
+                catch (Exception ex) { };
+
+                try
+                {
+                    var date = DateTime.ParseExact(steamDate, "dd MMMM yyyy", CultureInfo.InvariantCulture);
+                    return date;
+                }
+                catch (Exception ex) { };
+            }
+            catch (Exception ex) { };
+            return DateTime.MinValue;
         }
     }
 }

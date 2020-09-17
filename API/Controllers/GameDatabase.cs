@@ -6,8 +6,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using GameAPILibrary;
 using GameAPILibrary.Resources.Data;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -40,19 +42,26 @@ namespace API.Controllers
             [FromQuery(Name = "id")] uint id,
             [FromQuery(Name = "dlc")] bool dlc = false)
         {
-            var app = (App) await _service.GetAppFromCache(id);
+            if (await _service.CacheIfOverdue(id))
+            { 
+                var app = (App) await _service.GetAppFromCache(id);
 
-            if (app is null)
-                return "No App with specified ID";
+                if (app is null)
+                    return "No App with specified ID";
+                else
+                {
+                    if (dlc)
+                    {
+                        app.SerializeDLCIDs = true;
+                        app.DLC = await _service.GetDLCsFromCache(app.Id);
+                    }
+
+                    return JsonConvert.SerializeObject(app, Formatting.Indented);
+                }
+            }
             else
             {
-                if (dlc)
-                {
-                    app.SerializeDLCIDs = true;
-                    app.DLC = await _service.GetDLCsFromCache(app.Id);
-                }
-
-                return JsonConvert.SerializeObject(app, Formatting.Indented);
+                return JsonConvert.SerializeObject(new { error404 = "NOT FOUND", Message = "Failed to cache app" });
             }
         }
 

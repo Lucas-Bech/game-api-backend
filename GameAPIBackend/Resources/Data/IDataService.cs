@@ -24,6 +24,11 @@ namespace GameAPILibrary.Resources.Data
         public Task<List<DLC>> GetDLCsFromCache(uint appId);
 
         ///<summary>
+        ///Caches data if caching is overdue by using the CacheApp method
+        ///</summary>
+        public Task<bool> CacheIfOverdue(uint appId);
+
+        ///<summary>
         ///Caches data related to specified app to the database
         ///</summary>
         public Task<bool> CacheApp(uint appId);
