@@ -26,7 +26,8 @@ namespace GameAPILibrary.Resources.Data
 
         private void Log(string message)
         {
-            LogHandler.Invoke(this, new LogEventArgs(message));
+            if(!(LogHandler is null))
+                LogHandler.Invoke(this, new LogEventArgs(message));
         }
 
         public async Task<IApp> GetAppFromCache(uint appId, bool isDLC = false)
@@ -118,9 +119,10 @@ namespace GameAPILibrary.Resources.Data
                 var jsonData = JsonConvert.SerializeObject(data[$"{appId}"]["data"]);
                 AppDetails appDetails = JsonConvert.DeserializeObject<AppDetails>(jsonData);
 
-                App app = appDetails.ToApp();
+                if(!(appDetails is null))
+                    return appDetails.ToApp();
 
-                return app;
+                return null;
             }
             catch (Exception ex) { Log(ex.Message); };
             return null;

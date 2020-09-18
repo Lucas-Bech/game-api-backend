@@ -41,13 +41,31 @@ namespace GameAPILibrary
         public List<Developer> Developers { get => _developers; set => _developers = value; }
 
         [JsonProperty("developers")]
-        public List<string> DevelopersStr { get => _developers.Select(item => item.Name).ToList(); }
+        public List<string> DevelopersStr
+        {
+            get
+            {
+                if (_developers.Count > 0 && !(_developers[0] is null))
+                    return _developers.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
 
         [JsonIgnore]
         public List<Publisher> Publishers { get => _publishers; set => _publishers = value; }
 
         [JsonProperty("publishers")]
-        public List<string> PublishersStr { get => _publishers.Select(item => item.Name).ToList(); }
+        public List<string> PublishersStr
+        {
+            get
+            {
+                if (_publishers.Count > 0 && !(_publishers[0] is null))
+                    return _publishers.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
 
         [JsonProperty("release_date")]
         public ReleaseInfo ReleaseDate { get => _releaseDate; set => _releaseDate = value; }
@@ -56,13 +74,32 @@ namespace GameAPILibrary
         public List<Genre> Genres { get => _genres; set => _genres = value; }
 
         [JsonProperty("genres")]
-        public List<string> GenresStr { get => _genres.Select(item => item.Name).ToList(); }
+        public List<string> GenresStr
+        {
+            get
+            {
+                if (_genres.Count > 0 && !(_genres[0] is null))
+                    return _genres.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
 
         [JsonIgnore]
         public List<Category> Categories { get => _categories; set => _categories = value; }
 
         [JsonProperty("categories")]
-        public List<string> CategoriesStr { get => _categories.Select(item => item.Name).ToList(); }
+        public List<string> CategoriesStr
+        {
+            get
+            {
+                if (_categories.Count > 0 && !(_categories[0] is null))
+                    return _categories.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
+
 
         [JsonProperty("dlc", Required = Required.Default)]
         public List<DLC> DLC { get => _dlc; set => _dlc = value; }

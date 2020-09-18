@@ -69,12 +69,19 @@ namespace API.Controllers
         [HttpGet("dlc/")]
         public async Task<string> Get([FromQuery(Name = "id")] uint id)
         {
-            var app = (DLC) await _service.GetAppFromCache(id, true);
+            if (await _service.CacheIfOverdue(id))
+            {
+                var app = (DLC)await _service.GetAppFromCache(id, true);
 
-            if (app is null)
-                return "No DLC with specified ID";
+                if (app is null)
+                    return "No DLC with specified ID";
+                else
+                    return JsonConvert.SerializeObject(app, Formatting.Indented);
+            }
             else
-                return JsonConvert.SerializeObject(app, Formatting.Indented);
+            {
+                return JsonConvert.SerializeObject(new { error404 = "NOT FOUND", Message = "Failed to cache app" });
+            }
         }
 
 
