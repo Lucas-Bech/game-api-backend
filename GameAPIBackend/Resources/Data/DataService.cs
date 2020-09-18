@@ -81,6 +81,36 @@ namespace GameAPILibrary.Resources.Data
             return null;
         }
 
+
+
+        public async Task<List<App>> GetAppsFromCache(string input)
+        {
+            try
+            {
+                List<App> result = new List<App>();
+                string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
+                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
+                {
+                    var param = new { like = ("%" + input + "%") };
+                    string sql = $"SELECT app.id, app.name, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, g.id as id, g.name, ac.category_id as id, c.name" +
+                    $" FROM app" +
+                    $" LEFT JOIN type t ON t.id = app.type_id" +
+                    $" LEFT JOIN developer d ON d.id = app.developer_id" +
+                    $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
+                    $" LEFT JOIN app_genre ag ON ag.app_id = app.id" +
+                    $" LEFT JOIN genre g ON g.id = ag.genre_id" +
+                    $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
+                    $" LEFT JOIN category c ON c.id = ac.category_id" +
+                    $" WHERE app.name LIKE @like";
+
+                    return (await connection.QueryAsync<App>(sql, param)).ToList();
+                }
+            }
+            catch (Exception ex) { Log(ex.Message); }
+            return new List<App>();
+        }
+
+
         public async Task<List<DLC>> GetDLCsFromCache(uint appId)
         {
             List<DLC> dlc = new List<DLC>();

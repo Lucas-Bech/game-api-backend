@@ -19,6 +19,11 @@ namespace GameAPILibrary.Resources.Data
         public Task<IApp> GetAppFromCache(uint appId, bool isDLC = false);
 
         ///<summary>
+        ///Returns Apps with a name %like% input
+        ///</summary>
+        public Task<List<App>> GetAppsFromCache(string input);
+
+        ///<summary>
         ///Gets DLCs for specified appId. If baseApp is passed the DLC's will contain a reference to said app
         ///</summary>
         public Task<List<DLC>> GetDLCsFromCache(uint appId);

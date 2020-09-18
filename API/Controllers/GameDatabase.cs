@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
+using Dapper;
 using GameAPILibrary;
 using GameAPILibrary.Resources.Data;
 using Microsoft.AspNetCore.Http;
@@ -24,17 +25,6 @@ namespace API.Controllers
 
         public GameDatabase(IDataService service)
             => _service = service;
-
-        // GET: api/<GameDatabase>
-        [HttpGet]
-        public IEnumerable<string> Get()
-        {
-
-            _service.CacheApp(919640);
-
-
-            return new string[] { "value1", "value2" };
-        }
 
         // GET api/<GameDatabase>/game/?{id}&{dlc}
         [HttpGet("game/")]
@@ -89,39 +79,7 @@ namespace API.Controllers
         [Microsoft.AspNetCore.Mvc.HttpGet("games/")]
         public async Task<string> Test([FromQuery(Name = "like")] string parameter)
         {
-            DataSet ds = new DataSet();
-            List<App> result = new List<App>();
-            string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
-
-            using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-            {
-                string sql = $"SELECT app.id FROM gameapi.app WHERE name LIKE '%{parameter}%'";
-
-                connection.Open();
-
-                using (MySqlCommand cmd = new MySqlCommand(sql, connection))
-                {
-                    //Saving it to adapter as to avoid doing two loops to get data.
-                    using (MySqlDataAdapter adapter = new MySqlDataAdapter(cmd))
-                    {
-                        adapter.Fill(ds);
-                    }
-                }
-            }
-
-            using (DataTableReader reader = ds.CreateDataReader())
-            {
-                int x = 0;
-                //Limit the results to 2000 games.
-                while (reader.Read() && x < 2000)
-                {
-                    App app = (App) await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
-                    if(!(app is null))
-                        result.Add(app);
-                    x++;
-                }
-            }
-
+            var result = await _service.GetAppsFromCache(parameter);
             return JsonConvert.SerializeObject(result, Formatting.Indented);
         }
     }
