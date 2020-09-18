@@ -85,9 +85,9 @@ namespace API.Controllers
         }
 
 
-        // POST api/gamedatabase/test/{parameter}
-        [Microsoft.AspNetCore.Mvc.HttpGet("test/{parameter}")]
-        public async Task<string> Test(string parameter)
+        // POST api/gamedatabase/games/?like={parameter}
+        [Microsoft.AspNetCore.Mvc.HttpGet("games/")]
+        public async Task<string> Test([FromQuery(Name = "like")] string parameter)
         {
             DataSet ds = new DataSet();
             List<App> result = new List<App>();
@@ -112,8 +112,8 @@ namespace API.Controllers
             using (DataTableReader reader = ds.CreateDataReader())
             {
                 int x = 0;
-                //Limit the results to 1000 games.
-                while (reader.Read() && x < 1000)
+                //Limit the results to 2000 games.
+                while (reader.Read() && x < 2000)
                 {
                     App app = (App) await _service.GetAppFromCache(Convert.ToUInt32(reader.GetValue(0)));
                     if(!(app is null))
@@ -123,27 +123,6 @@ namespace API.Controllers
             }
 
             return JsonConvert.SerializeObject(result, Formatting.Indented);
-        }
-
-
-        // POST api/<GameDatabase>
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
-        }
-
-
-
-        // PUT api/<GameDatabase>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
-        }
-
-        // DELETE api/<GameDatabase>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
         }
     }
 }

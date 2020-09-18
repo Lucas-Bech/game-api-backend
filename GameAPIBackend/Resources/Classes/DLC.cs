@@ -2,6 +2,7 @@
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,20 +36,68 @@ namespace GameAPILibrary
         [JsonProperty("required_age")]
         public uint RequiredAge { get => requiredAge; set => requiredAge = value; }
 
-        [JsonProperty("developers")]
+        [JsonIgnore]
         public List<Developer> Developers { get => _developers; set => _developers = value; }
 
-        [JsonProperty("publishers")]
+        [JsonProperty("developers")]
+        public List<string> DevelopersStr
+        {
+            get
+            {
+                if (_developers.Count > 0 && !(_developers[0] is null))
+                    return _developers.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
+
+        [JsonIgnore]
         public List<Publisher> Publishers { get => _publishers; set => _publishers = value; }
+
+        [JsonProperty("publishers")]
+        public List<string> PublishersStr
+        {
+            get
+            {
+                if (_publishers.Count > 0 && !(_publishers[0] is null))
+                    return _publishers.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
 
         [JsonProperty("release_date")]
         public ReleaseInfo ReleaseDate { get => _releaseDate; set => _releaseDate = value; }
 
-        [JsonProperty("genres")]
+        [JsonIgnore]
         public List<Genre> Genres { get => _genres; set => _genres = value; }
 
-        [JsonProperty("categories")]
+        [JsonProperty("genres")]
+        public List<string> GenresStr
+        {
+            get
+            {
+                if (_genres.Count > 0 && !(_genres[0] is null))
+                    return _genres.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
+
+        [JsonIgnore]
         public List<Category> Categories { get => _categories; set => _categories = value; }
+
+        [JsonProperty("categories")]
+        public List<string> CategoriesStr
+        {
+            get
+            {
+                if (_categories.Count > 0 && !(_categories[0] is null))
+                    return _categories.Select(item => item.Name).ToList();
+                else
+                    return new List<string>();
+            }
+        }
 
 
         [JsonIgnore]
