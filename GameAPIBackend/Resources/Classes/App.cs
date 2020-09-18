@@ -37,20 +37,32 @@ namespace GameAPILibrary
         [JsonProperty("required_age")]
         public uint RequiredAge { get => requiredAge; set => requiredAge = value; }
 
-        [JsonProperty("developers")]
+        [JsonIgnore]
         public List<Developer> Developers { get => _developers; set => _developers = value; }
 
-        [JsonProperty("publishers")]
+        [JsonProperty("developers")]
+        public List<string> DevelopersStr { get => _developers.Select(item => item.Name).ToList(); }
+
+        [JsonIgnore]
         public List<Publisher> Publishers { get => _publishers; set => _publishers = value; }
+
+        [JsonProperty("publishers")]
+        public List<string> PublishersStr { get => _publishers.Select(item => item.Name).ToList(); }
 
         [JsonProperty("release_date")]
         public ReleaseInfo ReleaseDate { get => _releaseDate; set => _releaseDate = value; }
 
-        [JsonProperty("genres")]
+        [JsonIgnore]
         public List<Genre> Genres { get => _genres; set => _genres = value; }
 
-        [JsonProperty("categories")]
+        [JsonProperty("genres")]
+        public List<string> GenresStr { get => _genres.Select(item => item.Name).ToList(); }
+
+        [JsonIgnore]
         public List<Category> Categories { get => _categories; set => _categories = value; }
+
+        [JsonProperty("categories")]
+        public List<string> CategoriesStr { get => _categories.Select(item => item.Name).ToList(); }
 
         [JsonProperty("dlc", Required = Required.Default)]
         public List<DLC> DLC { get => _dlc; set => _dlc = value; }
