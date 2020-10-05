@@ -21,6 +21,7 @@ namespace GameAPILibrary
         private List<Genre> _genres = new List<Genre>();
         private List<Category> _categories = new List<Category>();
         private List<DLC> _dlc = new List<DLC>();
+        private string _headerImage;
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -111,6 +112,8 @@ namespace GameAPILibrary
             }
         }
 
+        public string HeaderImage { get => _headerImage; set => _headerImage = value; }
+
         [JsonIgnore]
         public bool SerializeDLC = false;
         public bool ShouldSerializeDLC()
@@ -137,7 +140,8 @@ namespace GameAPILibrary
             List<Publisher> publishers,
             ReleaseInfo releaseDate,
             List<Genre> genres,
-            List<Category> categories)
+            List<Category> categories,
+            string headerImage)
         {
             Id = id;
             Name = name;
@@ -146,6 +150,7 @@ namespace GameAPILibrary
             ReleaseDate = releaseDate;
             Genres = genres;
             Categories = categories;
+            _headerImage = headerImage;
         }
 
         public override string ToString()

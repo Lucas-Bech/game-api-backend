@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using GameAPILibrary.APIMappers;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI.CRUD;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -44,6 +45,9 @@ namespace GameAPILibrary.Resources.Data
             return (await GetApps(condition, param)).Select(x => (App)x).ToList();
         }
 
+        ///<summary>
+        ///Used as a generalist method for getting apps from cache
+        ///</summary>
         private async Task<List<IApp>> GetApps(string sqlCondition, object param, bool asDLC = false)
         {
             try
@@ -58,7 +62,7 @@ namespace GameAPILibrary.Resources.Data
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    string sql = $"SELECT app.id, app.name, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
+                    string sql = $"SELECT app.id, app.name, app.header_image as HeaderImage, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
                     $" (SELECT GROUP_CONCAT(CONCAT(c.id, ' ', c.name) SEPARATOR ',') FROM category c" +
                     $" WHERE EXISTS(SELECT ac.app_id FROM app_category ac WHERE ac.app_id = app.id AND c.id = ac.category_id)) as categories," +
                     $" (SELECT GROUP_CONCAT(CONCAT(g.id, ' ', g.name) SEPARATOR ',') FROM genre g" +
@@ -81,6 +85,7 @@ namespace GameAPILibrary.Resources.Data
                             app.Publishers.Add((Publisher)objects[3]);
                             app.ReleaseDate = new ReleaseInfo((bool)objects[4], (DateTime?)objects[5]);
 
+                            //Create category objects
                             if (!(objects[6] is null))
                             {
                                 var categories = objects[6].ToString().Split(",");
@@ -93,6 +98,7 @@ namespace GameAPILibrary.Resources.Data
                                 }
                             }
 
+                            //Create genre objects
                             if (!(objects[7] is null))
                             {
                                 var genres = objects[7].ToString().Split(",");
@@ -152,6 +158,7 @@ namespace GameAPILibrary.Resources.Data
                 var jsonData = JsonConvert.SerializeObject(data[$"{appId}"]["data"]);
                 AppDetails appDetails = JsonConvert.DeserializeObject<AppDetails>(jsonData);
 
+                
                 if(!(appDetails is null))
                     return appDetails.ToApp();
 
@@ -175,11 +182,11 @@ namespace GameAPILibrary.Resources.Data
                     date = (await conn.QueryAsync<DateTime>(sql, param)).FirstOrDefault();
                 }
 
-                if(date < DateTime.Now.ToUniversalTime().AddHours(1))
+                if (date > DateTime.Now.ToUniversalTime().AddHours(1))
                 {
                     await CacheApp(appID);
-                    return true;
                 }
+                return true;
             }
             catch (Exception ex) { Log(ex.Message); }
             return false;
@@ -368,6 +375,17 @@ namespace GameAPILibrary.Resources.Data
                         await conn.ExecuteAsync(cacheRel, parameters);
                     }
                     catch (Exception ex) { Log(ex.Message); }
+
+
+                    //Update header image
+                    try
+                    {
+                        var parameters = new { headerImage = app.HeaderImage, appID = app.Id };
+                        string cacheHeader = $"UPDATE app SET header_image = @headerImage WHERE id = @appID";
+                        await conn.ExecuteAsync(cacheHeader, parameters);
+                    }
+                    catch (Exception ex) { Log(ex.Message); }
+
                 }
                 return true;
             }

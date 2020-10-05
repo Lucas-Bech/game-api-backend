@@ -28,5 +28,7 @@ namespace GameAPILibrary.Resources
 
         public List<Category> Categories { get; set; }
         public List<string> CategoriesStr { get; }
+
+        public string HeaderImage { get; set; }
     }
 }

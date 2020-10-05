@@ -19,7 +19,7 @@ namespace GameAPILibrary
         private ReleaseInfo _releaseDate;
         private List<Genre> _genres = new List<Genre>();
         private List<Category> _categories = new List<Category>();
-        private App _baseApp = null;
+        private string _headerImage;
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -99,23 +99,7 @@ namespace GameAPILibrary
             }
         }
 
-
-        [JsonIgnore]
-        public App BaseApp { get => _baseApp;}
-
-        //If baseapp isnt defined, it will return null. 
-        //Newtonsoft Json will then ignore the property
-        [JsonProperty("base_app_id", NullValueHandling = NullValueHandling.Ignore)]
-        public uint? BaseAppId
-        {
-            get
-            {
-                if (!(BaseApp is null))
-                    return BaseApp.Id;
-                else
-                    return null;
-            }
-        }
+        public string HeaderImage { get => _headerImage; set => _headerImage = value; }
 
         public DLC()
         {
@@ -127,12 +111,6 @@ namespace GameAPILibrary
             Id = id;
         }
 
-        public DLC(uint id, App baseApp)
-        {
-            Id = id;
-            SetBaseApp(baseApp);
-        }
-
         [JsonConstructor]
         public DLC(uint id,
             string name,
@@ -140,7 +118,8 @@ namespace GameAPILibrary
             List<Publisher> publishers,
             ReleaseInfo releaseDate,
             List<Genre> genres,
-            List<Category> categories)
+            List<Category> categories,
+            string headerImage)
         {
             Id = id;
             Name = name;
@@ -149,11 +128,7 @@ namespace GameAPILibrary
             ReleaseDate = releaseDate;
             Genres = genres;
             Categories = categories;
-        }
-
-        public void SetBaseApp(App baseApp)
-        {
-            _baseApp = baseApp;
+            _headerImage = headerImage;
         }
     }
 }

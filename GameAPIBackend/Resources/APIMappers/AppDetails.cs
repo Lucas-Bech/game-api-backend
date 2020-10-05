@@ -20,6 +20,7 @@ namespace GameAPILibrary.APIMappers
         private List<Genre> _genres = new List<Genre>();
         private List<Category> _categories = new List<Category>();
         private List<uint> _dlc = new List<uint>();
+        private string _headerImage;
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -49,6 +50,8 @@ namespace GameAPILibrary.APIMappers
         [JsonProperty("dlc")]
         public List<uint> DLC { get => _dlc; set => _dlc = value; }
 
+        [JsonProperty("header_image")]
+        public string HeaderImage { get => _headerImage; set => _headerImage = value; }
 
         public AppDetails()
         {
@@ -89,7 +92,7 @@ namespace GameAPILibrary.APIMappers
                 pubs.Add(pub);
             }
 
-            App app = new App(Id, Name, devs, pubs, ReleaseDate, Genres, Categories);
+            App app = new App(Id, Name, devs, pubs, ReleaseDate, Genres, Categories, HeaderImage);
             app.Type.Name = Type;
 
             foreach(uint i in DLC)
