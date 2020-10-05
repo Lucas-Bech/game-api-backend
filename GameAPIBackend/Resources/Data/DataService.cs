@@ -182,7 +182,8 @@ namespace GameAPILibrary.Resources.Data
                     date = (await conn.QueryAsync<DateTime>(sql, param)).FirstOrDefault();
                 }
 
-                if (date > DateTime.Now.ToUniversalTime().AddHours(1))
+                DateTime toCompare = (DateTime) date;
+                if (toCompare.AddHours(1) < DateTime.Now.ToUniversalTime())
                 {
                     await CacheApp(appID);
                 }
