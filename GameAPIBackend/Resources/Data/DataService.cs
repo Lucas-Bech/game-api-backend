@@ -51,22 +51,22 @@ namespace GameAPILibrary.Resources.Data
                 if (sqlCondition == "" || sqlCondition is null)
                     return new List<IApp>();
 
-                var types = new[] { typeof(App), typeof(AppType), typeof(Developer), typeof(Publisher), typeof(bool), typeof(DateTime?), typeof(Genre), typeof(Category) };
+                var types = new[] { typeof(App), typeof(AppType), typeof(Developer), typeof(Publisher), typeof(bool), typeof(DateTime?), typeof(string), typeof(string) };
                 if (asDLC)
                     types[0] = typeof(DLC);
 
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    string sql = $"SELECT app.id, app.name, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, g.id as id, g.name, ac.category_id as id, c.name" +
+                    string sql = $"SELECT app.id, app.name, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
+                    $" (SELECT GROUP_CONCAT(CONCAT(c.id, ' ', c.name) SEPARATOR ',') FROM category c" +
+                    $" WHERE EXISTS(SELECT ac.app_id FROM app_category ac WHERE ac.app_id = app.id AND c.id = ac.category_id)) as categories," +
+                    $" (SELECT GROUP_CONCAT(CONCAT(g.id, ' ', g.name) SEPARATOR ',') FROM genre g" +
+                    $" WHERE EXISTS(SELECT ag.app_id FROM app_genre ag WHERE ag.app_id = app.id AND g.id = ag.genre_id)) as genres" +
                     $" FROM app" +
                     $" LEFT JOIN type t ON t.id = app.type_id" +
                     $" LEFT JOIN developer d ON d.id = app.developer_id" +
                     $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
-                    $" LEFT JOIN app_genre ag ON ag.app_id = app.id" +
-                    $" LEFT JOIN genre g ON g.id = ag.genre_id" +
-                    $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
-                    $" LEFT JOIN category c ON c.id = ac.category_id" +
                     $" {sqlCondition}";
 
                     return (await conn.QueryAsync<IApp>(sql,
@@ -80,11 +80,34 @@ namespace GameAPILibrary.Resources.Data
                             app.Developers.Add((Developer)objects[2]);
                             app.Publishers.Add((Publisher)objects[3]);
                             app.ReleaseDate = new ReleaseInfo((bool)objects[4], (DateTime?)objects[5]);
-                            app.Genres.Add((Genre)objects[6]);
-                            app.Categories.Add((Category)objects[7]);
+
+                            if (!(objects[6] is null))
+                            {
+                                var categories = objects[6].ToString().Split(",");
+                                foreach (string str in categories)
+                                {
+                                    var data = str.Split(" ", 2);
+                                    var id = Convert.ToUInt32(data[0]);
+                                    var name = data[1];
+                                    app.Categories.Add(new Category(id, name));
+                                }
+                            }
+
+                            if (!(objects[7] is null))
+                            {
+                                var genres = objects[7].ToString().Split(",");
+                                foreach (string str in genres)
+                                {
+                                    var data = str.Split(" ", 2);
+                                    var id = Convert.ToUInt32(data[0]);
+                                    var name = data[1];
+                                    app.Genres.Add(new Genre(id, name));
+                                }
+                            }
+
                             return app;
                         },
-                        splitOn: "id, coming_soon, release_date, id, id", param: param)).ToList();
+                        splitOn: "id, coming_soon, release_date, categories, genres", param: param)).ToList();
                 }
             }
             catch (Exception ex) { Log(ex.Message); }
