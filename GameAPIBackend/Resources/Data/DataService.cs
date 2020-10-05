@@ -30,12 +30,31 @@ namespace GameAPILibrary.Resources.Data
                 LogHandler.Invoke(this, new LogEventArgs(message));
         }
 
-        public async Task<IApp> GetAppFromCache(uint appId, bool isDLC = false)
+        public async Task<IApp> GetAppFromCache(uint appId, bool asDLC = false)
+        {
+            string condition = "WHERE app.id = @AppID";
+            var param = new { AppID = appId };
+            return (await GetApps(condition, param, asDLC)).FirstOrDefault();
+        }
+
+        public async Task<List<App>> GetAppsFromCache(string input)
+        {
+            string condition = "WHERE app.name LIKE @value";
+            var param = new { value = $"%{input}%" };
+            return (await GetApps(condition, param)).Select(x => (App)x).ToList();
+        }
+
+        private async Task<List<IApp>> GetApps(string sqlCondition, object param, bool asDLC = false)
         {
             try
             {
+                if (sqlCondition == "" || sqlCondition is null)
+                    return new List<IApp>();
+
                 var types = new[] { typeof(App), typeof(AppType), typeof(Developer), typeof(Publisher), typeof(bool), typeof(DateTime?), typeof(Genre), typeof(Category) };
-                
+                if (asDLC)
+                    types[0] = typeof(DLC);
+
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
@@ -48,15 +67,7 @@ namespace GameAPILibrary.Resources.Data
                     $" LEFT JOIN genre g ON g.id = ag.genre_id" +
                     $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
                     $" LEFT JOIN category c ON c.id = ac.category_id" +
-                    $" WHERE app.id = {appId}";
-
-                    //If user is requesting dlc, we make the first type to class DLC instead of APP
-                    //And limit the query result to apps that exist in the dlc table
-                    if (isDLC)
-                    {
-                        sql = $"{sql} AND EXISTS(SELECT app_id FROM dlc WHERE app_id = app.id);";
-                        types[0] = typeof(DLC);
-                    }
+                    $" {sqlCondition}";
 
                     return (await conn.QueryAsync<IApp>(sql,
                         types,
@@ -73,43 +84,12 @@ namespace GameAPILibrary.Resources.Data
                             app.Categories.Add((Category)objects[7]);
                             return app;
                         },
-                        splitOn: "id, coming_soon, release_date, id, id")).FirstOrDefault();
-                }
-            }
-            catch (Exception ex) { Log(ex.Message); };
-
-            return null;
-        }
-
-
-
-        public async Task<List<App>> GetAppsFromCache(string input)
-        {
-            try
-            {
-                List<App> result = new List<App>();
-                string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
-                using (MySqlConnection connection = new MySqlConnection(ConnectionString))
-                {
-                    var param = new { like = ("%" + input + "%") };
-                    string sql = $"SELECT app.id, app.name, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date, g.id as id, g.name, ac.category_id as id, c.name" +
-                    $" FROM app" +
-                    $" LEFT JOIN type t ON t.id = app.type_id" +
-                    $" LEFT JOIN developer d ON d.id = app.developer_id" +
-                    $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
-                    $" LEFT JOIN app_genre ag ON ag.app_id = app.id" +
-                    $" LEFT JOIN genre g ON g.id = ag.genre_id" +
-                    $" LEFT JOIN app_category ac ON ac.app_id = app.id" +
-                    $" LEFT JOIN category c ON c.id = ac.category_id" +
-                    $" WHERE app.name LIKE @like";
-
-                    return (await connection.QueryAsync<App>(sql, param)).ToList();
+                        splitOn: "id, coming_soon, release_date, id, id", param: param)).ToList();
                 }
             }
             catch (Exception ex) { Log(ex.Message); }
-            return new List<App>();
+            return new List<IApp>();
         }
-
 
         public async Task<List<DLC>> GetDLCsFromCache(uint appId)
         {

@@ -26,6 +26,7 @@ namespace API.Controllers
         public GameDatabase(IDataService service)
             => _service = service;
 
+
         // GET api/<GameDatabase>/game/?{id}&{dlc}
         [HttpGet("game/")]
         public async Task<string> Get(
@@ -50,10 +51,9 @@ namespace API.Controllers
                 }
             }
             else
-            {
                 return JsonConvert.SerializeObject(new { error404 = "NOT FOUND", Message = "Failed to cache app" });
-            }
         }
+
 
         // GET api/<GameDatabase>/dlc/?{id}
         [HttpGet("dlc/")]
@@ -69,9 +69,7 @@ namespace API.Controllers
                     return JsonConvert.SerializeObject(app, Formatting.Indented);
             }
             else
-            {
                 return JsonConvert.SerializeObject(new { error404 = "NOT FOUND", Message = "Failed to cache app" });
-            }
         }
 
 
@@ -80,7 +78,10 @@ namespace API.Controllers
         public async Task<string> Test([FromQuery(Name = "like")] string parameter)
         {
             var result = await _service.GetAppsFromCache(parameter);
-            return JsonConvert.SerializeObject(result, Formatting.Indented);
+            if(result.Count > 0)
+                return JsonConvert.SerializeObject(result, Formatting.Indented);
+            else
+                return JsonConvert.SerializeObject(new { error404 = "NOT FOUND", Message = "No apps matched the condition" });
         }
     }
 }
