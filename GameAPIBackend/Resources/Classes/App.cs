@@ -102,16 +102,17 @@ namespace GameAPILibrary
         }
 
 
-        [JsonProperty("dlc", Required = Required.Default)]
+        [JsonProperty("dlc")]
         public List<DLC> DLC { get => _dlc; set => _dlc = value; }
 
-        [JsonProperty("dlc_ids", Required = Required.Default)]
+        [JsonProperty("dlc_ids")]
         public List<uint> DLCIDs { get 
             {
                 return DLC.Select(dlc => dlc.Id).ToList();
             }
         }
 
+        [JsonProperty("header_image")]
         public string HeaderImage { get => _headerImage; set => _headerImage = value; }
 
         [JsonIgnore]

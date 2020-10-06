@@ -99,6 +99,7 @@ namespace GameAPILibrary
             }
         }
 
+        [JsonProperty("header_image")]
         public string HeaderImage { get => _headerImage; set => _headerImage = value; }
 
         public DLC()
