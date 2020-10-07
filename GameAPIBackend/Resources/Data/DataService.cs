@@ -38,17 +38,17 @@ namespace GameAPILibrary.Resources.Data
             return (await GetApps(condition, param, asDLC)).FirstOrDefault();
         }
 
-        public async Task<List<App>> GetAppsFromCache(string input)
+        public async Task<List<App>> GetAppsFromCache(string input, uint limit)
         {
             string condition = "WHERE app.name LIKE @value";
-            var param = new { value = $"%{input}%" };
-            return (await GetApps(condition, param)).Select(x => (App)x).ToList();
+            var param = new { value = $"%{input}%"};
+            return (await GetApps(condition, param, limit: limit)).Select(x => (App)x).ToList();
         }
 
         ///<summary>
         ///Used as a generalist method for getting apps from cache
         ///</summary>
-        private async Task<List<IApp>> GetApps(string sqlCondition, object param, bool asDLC = false)
+        private async Task<List<IApp>> GetApps(string sqlCondition, object param, bool asDLC = false, uint limit = 0)
         {
             try
             {
@@ -60,6 +60,23 @@ namespace GameAPILibrary.Resources.Data
                     types[0] = typeof(DLC);
 
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
+
+                //Cache if limit is 5 or lower. 0 means no limit
+                if (limit <= 5 && limit > 0)
+                {
+                    List<uint> appIDs = new List<uint>();
+                    using (MySqlConnection conn = new MySqlConnection(ConnectionString))
+                    {
+                        string sql = $"SELECT id FROM app {sqlCondition} LIMIT {limit}";
+                        appIDs = (await conn.QueryAsync<uint>(sql, param)).ToList();
+                    }
+
+                    foreach (uint app in appIDs)
+                    {
+                        await CacheIfOverdue(app);
+                    }
+                }
+
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
                     string sql = $"SELECT app.id, app.name, app.header_image as HeaderImage, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
@@ -72,8 +89,10 @@ namespace GameAPILibrary.Resources.Data
                     $" LEFT JOIN developer d ON d.id = app.developer_id" +
                     $" LEFT JOIN publisher p ON p.id = app.publisher_id" +
                     $" {sqlCondition}";
+                    if(limit > 0)
+                        sql += $" LIMIT {limit}";
 
-                    return (await conn.QueryAsync<IApp>(sql,
+                    var apps = (await conn.QueryAsync<IApp>(sql,
                         types,
                         (objects) =>
                         {
@@ -114,6 +133,8 @@ namespace GameAPILibrary.Resources.Data
                             return app;
                         },
                         splitOn: "id, coming_soon, release_date, categories, genres", param: param)).ToList();
+
+                    return apps;
                 }
             }
             catch (Exception ex) { Log(ex.Message); }
@@ -202,8 +223,6 @@ namespace GameAPILibrary.Resources.Data
                 if (app is null)
                     throw new System.NullReferenceException("app cannot be null");
 
-                //The SQL string variables we be referring to the tables that they are inserting to
-
                 string ConnectionString = ConfigurationManager.AppSettings.Get("connectionstring");
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
@@ -211,8 +230,8 @@ namespace GameAPILibrary.Resources.Data
                     string name = app.Name;
                     AppType type = app.Type;
                     uint requiredAge = app.RequiredAge;
-                    string developer = app.Developers[0].Name;
-                    string publisher = app.Publishers[0].Name;
+                    string developer = app.Developers.Count > 0 ? app.Developers[0].Name : "";
+                    string publisher = app.Publishers.Count > 0 ? app.Publishers[0].Name : "";
                     bool comingSoon = app.ReleaseDate.ComingSoon;
                     DateTime releaseDate = (DateTime) app.ReleaseDate.Date;
                     List<uint> dlcIDs = app.DLCIDs;
@@ -268,6 +287,22 @@ namespace GameAPILibrary.Resources.Data
                         catch(Exception ex) { Log(ex.Message); }
                     }
 
+
+                    //Update types and cache type for game
+                    try
+                    {
+                        var param = new { typeName = type.Name };
+                        string createType = $"INSERT INTO type (name) VALUES (@typeName) ON DUPLICATE KEY UPDATE name = @name";
+                        await conn.ExecuteAsync(createType, createType);
+
+                        string getType = $"SELECT id FROM type WHERE name = @typeName";
+                        var typeID = await conn.QueryAsync<uint>(getType, param);
+
+                        var paramInsert = new { typeID = typeID };
+                        string cacheType = $"INSERT INTO app (type_id) VALUES (@typeName) ON DUPLICATE KEY UPDATE name = @name";
+                        await conn.ExecuteAsync(cacheType, paramInsert);
+                    }
+                    catch (Exception ex) { Log(ex.Message); }
 
                     //update genres
                     foreach (string gen in genres)
@@ -394,6 +429,5 @@ namespace GameAPILibrary.Resources.Data
 
             return false;
         }
-
     }
 }

@@ -21,7 +21,7 @@ namespace GameAPILibrary
         private List<Genre> _genres = new List<Genre>();
         private List<Category> _categories = new List<Category>();
         private List<DLC> _dlc = new List<DLC>();
-        private string _headerImage;
+        private string _headerImage = "";
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }

@@ -19,7 +19,7 @@ namespace GameAPILibrary
         private ReleaseInfo _releaseDate;
         private List<Genre> _genres = new List<Genre>();
         private List<Category> _categories = new List<Category>();
-        private string _headerImage;
+        private string _headerImage = "";
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }

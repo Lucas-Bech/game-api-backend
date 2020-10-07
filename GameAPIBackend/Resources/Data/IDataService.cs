@@ -21,7 +21,7 @@ namespace GameAPILibrary.Resources.Data
         ///<summary>
         ///Returns Apps with a name %like% input
         ///</summary>
-        public Task<List<App>> GetAppsFromCache(string input);
+        public Task<List<App>> GetAppsFromCache(string input, uint limit);
 
         ///<summary>
         ///Gets DLCs for specified appId. If baseApp is passed the DLC's will contain a reference to said app
@@ -37,6 +37,5 @@ namespace GameAPILibrary.Resources.Data
         ///Caches data related to specified app to the database
         ///</summary>
         public Task<bool> CacheApp(uint appId);
-
     }
 }

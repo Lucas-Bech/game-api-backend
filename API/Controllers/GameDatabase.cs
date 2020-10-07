@@ -75,9 +75,11 @@ namespace API.Controllers
 
         // POST api/gamedatabase/games/?like={parameter}
         [Microsoft.AspNetCore.Mvc.HttpGet("games/")]
-        public async Task<string> Test([FromQuery(Name = "like")] string parameter)
+        public async Task<string> Test(
+            [FromQuery(Name = "like")] string parameter,
+            [FromQuery(Name = "limit")] uint limit = 0)
         {
-            var result = await _service.GetAppsFromCache(parameter);
+            var result = await _service.GetAppsFromCache(parameter, limit);
             if(result.Count > 0)
                 return JsonConvert.SerializeObject(result, Formatting.Indented);
             else
