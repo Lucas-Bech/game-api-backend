@@ -17,6 +17,11 @@ namespace GameAPILibrary.Resources
         [JsonProperty("date")]
         public DateTime? Date { get => date; set => date = value; }
 
+        public ReleaseInfo()
+        {
+
+        }
+
         [JsonConstructor]
         public ReleaseInfo(bool comingSoon, string date)
         {

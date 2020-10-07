@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using GameAPILibrary.Resources;
 using GameAPILibrary.Resources.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -26,7 +27,10 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<IDataService>(new DataService());
+            var dataService = new DataService();
+            dataService.LogHandler += (o, e) => LogToConsole(o, e);
+
+            services.AddSingleton<IDataService>(dataService);
 
             services.AddControllers();
 
@@ -56,6 +60,11 @@ namespace API
             {
                 endpoints.MapControllers();
             });
+        }
+
+        public void LogToConsole(object sender, LogEventArgs arg)
+        {
+            Console.WriteLine(arg.Message);
         }
     }
 }

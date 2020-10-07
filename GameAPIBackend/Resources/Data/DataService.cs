@@ -79,7 +79,7 @@ namespace GameAPILibrary.Resources.Data
 
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
-                    string sql = $"SELECT app.id, app.name, app.header_image as HeaderImage, app.required_age as requiredage, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
+                    string sql = $"SELECT app.id, app.name, app.header_image as HeaderImage, app.required_age as requiredage, app.review_score as reviewscore, t.id as id, t.name, d.id, d.name, p.id, p.name, app.coming_soon, app.release_date," +
                     $" (SELECT GROUP_CONCAT(CONCAT(c.id, ' ', c.name) SEPARATOR ',') FROM category c" +
                     $" WHERE EXISTS(SELECT ac.app_id FROM app_category ac WHERE ac.app_id = app.id AND c.id = ac.category_id)) as categories," +
                     $" (SELECT GROUP_CONCAT(CONCAT(g.id, ' ', g.name) SEPARATOR ',') FROM genre g" +
@@ -141,7 +141,7 @@ namespace GameAPILibrary.Resources.Data
             return new List<IApp>();
         }
 
-        public async Task<List<DLC>> GetDLCsFromCache(uint appId)
+        public async Task<List<DLC>> GetDLCsFromCache(uint appID)
         {
             List<DLC> dlc = new List<DLC>();
             List<uint> dlcIDs = new List<uint>();
@@ -151,7 +151,7 @@ namespace GameAPILibrary.Resources.Data
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
                     string sql = $"SELECT app_id as id FROM dlc" +
-                                 $" WHERE base_app_id = {appId}";
+                                 $" WHERE base_app_id = {appID}";
 
                     dlcIDs = (await conn.QueryAsync<uint>(sql)).ToList();
                 }
@@ -165,23 +165,35 @@ namespace GameAPILibrary.Resources.Data
             return dlc;
         }
 
-        private async Task<App> GetAppFromApi(uint appId)
+        private async Task<App> GetAppFromApi(uint appID)
         {
-            string appDetailsUrl = $"https://store.steampowered.com/api/appdetails/?appids={appId}";
-            string json = "";
+            string appDetailsUrl = $"https://store.steampowered.com/api/appdetails/?appids={appID}";
+            string reviewURL = $"https://store.steampowered.com/appreviews/{appID}?json=1&num_per_page=0";
+            string jsonDetails = "";
+            string jsonReview = "";
             try
             {
                 HttpClient client = new HttpClient();
-                HttpResponseMessage response = await client.GetAsync(appDetailsUrl);
-                json = await response.Content.ReadAsStringAsync();
+                HttpResponseMessage responseDetails = await client.GetAsync(appDetailsUrl);
+                jsonDetails = await responseDetails.Content.ReadAsStringAsync();
 
-                dynamic data = JsonConvert.DeserializeObject(json);
-                var jsonData = JsonConvert.SerializeObject(data[$"{appId}"]["data"]);
+                HttpResponseMessage responseReview = await client.GetAsync(reviewURL);
+                jsonReview = await responseReview.Content.ReadAsStringAsync();
+
+                dynamic data = JsonConvert.DeserializeObject(jsonDetails);
+                var jsonData = JsonConvert.SerializeObject(data[$"{appID}"]["data"]);
                 AppDetails appDetails = JsonConvert.DeserializeObject<AppDetails>(jsonData);
 
-                
-                if(!(appDetails is null))
-                    return appDetails.ToApp();
+                data = JsonConvert.DeserializeObject(jsonReview);
+                jsonData = JsonConvert.SerializeObject(data["query_summary"]["review_score"]);
+                uint reviewScore = JsonConvert.DeserializeObject<uint>(jsonData);
+
+                if (!(appDetails is null))
+                {
+                    var app = appDetails.ToApp();
+                    app.ReviewScore = reviewScore;
+                    return app;
+                }
 
                 return null;
             }
@@ -204,10 +216,10 @@ namespace GameAPILibrary.Resources.Data
                 }
 
                 DateTime toCompare = (DateTime) date;
+
                 if (toCompare.AddHours(1) < DateTime.Now.ToUniversalTime())
-                {
                     await CacheApp(appID);
-                }
+
                 return true;
             }
             catch (Exception ex) { Log(ex.Message); }
@@ -288,21 +300,7 @@ namespace GameAPILibrary.Resources.Data
                     }
 
 
-                    //Update types and cache type for game
-                    try
-                    {
-                        var param = new { typeName = type.Name };
-                        string createType = $"INSERT INTO type (name) VALUES (@typeName) ON DUPLICATE KEY UPDATE name = @name";
-                        await conn.ExecuteAsync(createType, createType);
 
-                        string getType = $"SELECT id FROM type WHERE name = @typeName";
-                        var typeID = await conn.QueryAsync<uint>(getType, param);
-
-                        var paramInsert = new { typeID = typeID };
-                        string cacheType = $"INSERT INTO app (type_id) VALUES (@typeName) ON DUPLICATE KEY UPDATE name = @name";
-                        await conn.ExecuteAsync(cacheType, paramInsert);
-                    }
-                    catch (Exception ex) { Log(ex.Message); }
 
                     //update genres
                     foreach (string gen in genres)
@@ -336,7 +334,6 @@ namespace GameAPILibrary.Resources.Data
                         }
                         catch (Exception ex) { Log(ex.Message); }
                     }
-
 
                     //Update types
                     try
@@ -406,8 +403,11 @@ namespace GameAPILibrary.Resources.Data
                     //update required age
                     try
                     {
-                        var parameters = new { age = app.RequiredAge, appID = app.Id };
-                        string cacheRel = $"UPDATE app SET required_age = @age WHERE id = @appID";
+                        var parameters = new { age = app.RequiredAge, appID = app.Id, reviewScore = app.ReviewScore };
+                        string cacheRel = $"UPDATE app" +
+                            $" SET required_age = @age," +
+                            $" review_score = @reviewScore" +
+                            $" WHERE id = @appID";
                         await conn.ExecuteAsync(cacheRel, parameters);
                     }
                     catch (Exception ex) { Log(ex.Message); }
@@ -417,7 +417,7 @@ namespace GameAPILibrary.Resources.Data
                     try
                     {
                         var parameters = new { headerImage = app.HeaderImage, appID = app.Id };
-                        string cacheHeader = $"UPDATE app SET header_image = @headerImage WHERE id = @appID";
+                        string cacheHeader = $"UPDATE app SET  WHERE id = @appID";
                         await conn.ExecuteAsync(cacheHeader, parameters);
                     }
                     catch (Exception ex) { Log(ex.Message); }

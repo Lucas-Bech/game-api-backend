@@ -16,7 +16,7 @@ namespace GameAPILibrary.Resources.Data
         ///Returns App with specified ID if exists
         ///If isDLC is set to true, returns DLC
         ///</summary>
-        public Task<IApp> GetAppFromCache(uint appId, bool isDLC = false);
+        public Task<IApp> GetAppFromCache(uint appID, bool isDLC = false);
 
         ///<summary>
         ///Returns Apps with a name %like% input
@@ -26,16 +26,16 @@ namespace GameAPILibrary.Resources.Data
         ///<summary>
         ///Gets DLCs for specified appId. If baseApp is passed the DLC's will contain a reference to said app
         ///</summary>
-        public Task<List<DLC>> GetDLCsFromCache(uint appId);
+        public Task<List<DLC>> GetDLCsFromCache(uint appID);
 
         ///<summary>
         ///Caches data if caching is overdue by using the CacheApp method
         ///</summary>
-        public Task<bool> CacheIfOverdue(uint appId);
+        public Task<bool> CacheIfOverdue(uint appID);
 
         ///<summary>
         ///Caches data related to specified app to the database
         ///</summary>
-        public Task<bool> CacheApp(uint appId);
+        public Task<bool> CacheApp(uint appID);
     }
 }

@@ -22,6 +22,7 @@ namespace GameAPILibrary
         private List<Category> _categories = new List<Category>();
         private List<DLC> _dlc = new List<DLC>();
         private string _headerImage = "";
+        private uint _reviewScore;
 
         [JsonProperty("steam_appid")]
         public uint Id { get => _id; set => _id = value; }
@@ -114,6 +115,9 @@ namespace GameAPILibrary
 
         [JsonProperty("header_image")]
         public string HeaderImage { get => _headerImage; set => _headerImage = value; }
+
+        [JsonProperty("review_score")]
+        public uint ReviewScore { get => _reviewScore; set => _reviewScore = value; }
 
         [JsonIgnore]
         public bool SerializeDLC = false;

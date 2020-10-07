@@ -27,7 +27,7 @@ namespace API.Controllers
             => _service = service;
 
 
-        // GET api/<GameDatabase>/game/?{id}&{dlc}
+        // GET api/<GameDatabase>/game/?id={id}&dlc={dlc}
         [HttpGet("game/")]
         public async Task<string> Get(
             [FromQuery(Name = "id")] uint id,
@@ -55,7 +55,7 @@ namespace API.Controllers
         }
 
 
-        // GET api/<GameDatabase>/dlc/?{id}
+        // GET api/<GameDatabase>/dlc/?id={id}
         [HttpGet("dlc/")]
         public async Task<string> Get([FromQuery(Name = "id")] uint id)
         {
@@ -73,9 +73,9 @@ namespace API.Controllers
         }
 
 
-        // POST api/gamedatabase/games/?like={parameter}
+        // GET api/gamedatabase/games/?like={parameter}&limit={limit}
         [Microsoft.AspNetCore.Mvc.HttpGet("games/")]
-        public async Task<string> Test(
+        public async Task<string> Games(
             [FromQuery(Name = "like")] string parameter,
             [FromQuery(Name = "limit")] uint limit = 0)
         {

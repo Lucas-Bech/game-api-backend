@@ -30,5 +30,8 @@ namespace GameAPILibrary.Resources
         public List<string> CategoriesStr { get; }
 
         public string HeaderImage { get; set; }
+
+        public uint ReviewScore { get; set; }
+
     }
 }
