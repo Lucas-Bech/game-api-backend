@@ -184,9 +184,12 @@ namespace GameAPILibrary.Resources.Data
                 var jsonData = JsonConvert.SerializeObject(data[$"{appID}"]["data"]);
                 AppDetails appDetails = JsonConvert.DeserializeObject<AppDetails>(jsonData);
 
+                uint reviewScore = 0;
                 data = JsonConvert.DeserializeObject(jsonReview);
-                jsonData = JsonConvert.SerializeObject(data["query_summary"]["review_score"]);
-                uint reviewScore = JsonConvert.DeserializeObject<uint>(jsonData);
+                if (data.ToString().Contains("query_summary")){
+                    jsonData = JsonConvert.SerializeObject(data["query_summary"]["review_score"]);
+                    reviewScore = JsonConvert.DeserializeObject<uint>(jsonData);
+                }
 
                 if (!(appDetails is null))
                 {
