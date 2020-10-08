@@ -173,12 +173,14 @@ namespace GameAPILibrary.Resources.Data
             string jsonReview = "";
             try
             {
-                HttpClient client = new HttpClient();
-                HttpResponseMessage responseDetails = await client.GetAsync(appDetailsUrl);
-                jsonDetails = await responseDetails.Content.ReadAsStringAsync();
+                using (HttpClient client = new HttpClient())
+                {
+                    HttpResponseMessage responseDetails = await client.GetAsync(appDetailsUrl);
+                    jsonDetails = await responseDetails.Content.ReadAsStringAsync();
 
-                HttpResponseMessage responseReview = await client.GetAsync(reviewURL);
-                jsonReview = await responseReview.Content.ReadAsStringAsync();
+                    HttpResponseMessage responseReview = await client.GetAsync(reviewURL);
+                    jsonReview = await responseReview.Content.ReadAsStringAsync();
+                }
 
                 dynamic data = JsonConvert.DeserializeObject(jsonDetails);
                 var jsonData = JsonConvert.SerializeObject(data[$"{appID}"]["data"]);
@@ -186,7 +188,8 @@ namespace GameAPILibrary.Resources.Data
 
                 uint reviewScore = 0;
                 data = JsonConvert.DeserializeObject(jsonReview);
-                if (data.ToString().Contains("query_summary")){
+                if (data.ToString().Contains("query_summary"))
+                {
                     jsonData = JsonConvert.SerializeObject(data["query_summary"]["review_score"]);
                     reviewScore = JsonConvert.DeserializeObject<uint>(jsonData);
                 }
@@ -197,6 +200,7 @@ namespace GameAPILibrary.Resources.Data
                     app.ReviewScore = reviewScore;
                     return app;
                 }
+
 
                 return null;
             }
@@ -291,7 +295,6 @@ namespace GameAPILibrary.Resources.Data
                             var paramGet = new { categoryName = cat };
                             string getCatID = "SELECT id FROM category WHERE name = @categoryName";
                             int id = (await conn.QueryAsync<int>(getCatID, paramGet)).FirstOrDefault();
-
 
                             //Insert relation between app and category
                             var paramInsert = new { catID = id, appID = app.Id };
@@ -420,11 +423,19 @@ namespace GameAPILibrary.Resources.Data
                     try
                     {
                         var parameters = new { headerImage = app.HeaderImage, appID = app.Id };
-                        string cacheHeader = $"UPDATE app SET  WHERE id = @appID";
+                        string cacheHeader = $"UPDATE app SET header_image = @headerImage WHERE id = @appID";
                         await conn.ExecuteAsync(cacheHeader, parameters);
                     }
                     catch (Exception ex) { Log(ex.Message); }
 
+                    //Update caching datetime manually
+                    try
+                    {
+                        var parameters = new { appID = app.Id };
+                        string cacheHeader = $"UPDATE app SET last_caching_datetime = now() WHERE id = @appID";
+                        await conn.ExecuteAsync(cacheHeader, parameters);
+                    }
+                    catch (Exception ex) { Log(ex.Message); }
                 }
                 return true;
             }
