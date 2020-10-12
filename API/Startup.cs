@@ -56,6 +56,8 @@ namespace API
 
             app.UseCors("cors");
 
+            app.UseHttpsRedirection();
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
