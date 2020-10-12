@@ -51,18 +51,16 @@ namespace API
                 app.UseDeveloperExceptionPage();
             }
 
-            app.UseRouting();
-
-            app.UseAuthorization();
-
-            app.UseCors("cors");
-
             app.UseForwardedHeaders(new ForwardedHeadersOptions
             {
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
 
-            app.UseAuthentication();
+            app.UseRouting();
+
+            app.UseAuthorization();
+
+            app.UseCors("cors");
 
             app.UseEndpoints(endpoints =>
             {
