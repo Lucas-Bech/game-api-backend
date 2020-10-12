@@ -79,9 +79,7 @@ namespace API.Controllers
             [FromQuery(Name = "like")] string parameter,
             [FromQuery(Name = "limit")] uint limit = 0)
         {
-            var result = new List<App>();
-            if (!(parameter is null))
-                result = await _service.GetAppsFromCache(parameter, limit);
+            var result = await _service.GetAppsFromCache(parameter, limit);
             if(result.Count > 0)
                 return JsonConvert.SerializeObject(result, Formatting.Indented);
             else
