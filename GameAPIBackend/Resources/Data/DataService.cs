@@ -246,17 +246,17 @@ namespace GameAPILibrary.Resources.Data
                 using (MySqlConnection conn = new MySqlConnection(ConnectionString))
                 {
                     uint appID = app.Id;
-                    string name = app.Name;
                     AppType type = app.Type;
                     uint requiredAge = app.RequiredAge;
                     string developer = app.Developers.Count > 0 ? app.Developers[0].Name : "";
                     string publisher = app.Publishers.Count > 0 ? app.Publishers[0].Name : "";
                     bool comingSoon = app.ReleaseDate.ComingSoon;
+                    uint reviewScore = app.ReviewScore;
+                    string headerImage = app.HeaderImage;
                     DateTime releaseDate = (DateTime) app.ReleaseDate.Date;
                     List<uint> dlcIDs = app.DLCIDs;
                     List<string> categories = app.Categories.Select(item => item.Name).ToList();
                     List<string> genres = app.Genres.Select(item => item.Name).ToList();
-
 
                     conn.Open();
 
@@ -265,7 +265,7 @@ namespace GameAPILibrary.Resources.Data
                     {
                         try
                         {
-                            var parameters = new { appId = dlc, baseAppID = app.Id };
+                            var parameters = new { appId = dlc, baseAppID = appID };
                             string cacheDLC = $"INSERT INTO dlc (app_id, base_app_id)" +
                                 $" VALUES (@appId, @baseAppID) ON DUPLICATE KEY UPDATE app_id = @appID, base_app_id = @baseAppID";
                             await conn.ExecuteAsync(cacheDLC, parameters);
@@ -297,16 +297,13 @@ namespace GameAPILibrary.Resources.Data
                             int id = (await conn.QueryAsync<int>(getCatID, paramGet)).FirstOrDefault();
 
                             //Insert relation between app and category
-                            var paramInsert = new { catID = id, appID = app.Id };
+                            var paramInsert = new { catID = id, appID };
                             string cacheCategoryAppRelations = $"INSERT INTO app_category (app_id, category_id)" +
                                 $" VALUES (@appID, @catID) ON DUPLICATE KEY UPDATE app_id = @appID";
                             await conn.ExecuteAsync(cacheCategoryAppRelations, paramInsert);
                         }
                         catch(Exception ex) { Log(ex.Message); }
                     }
-
-
-
 
                     //update genres
                     foreach (string gen in genres)
@@ -333,7 +330,7 @@ namespace GameAPILibrary.Resources.Data
 
 
                             //Insert relation between app and genre
-                            var paramInsert = new { genID = id, appID = app.Id };
+                            var paramInsert = new { genID = id, appID };
                             string cacheCategoryAppRelations = $"INSERT INTO app_genre (app_id, genre_id)" +
                                 $" VALUES (@appID, @genID) ON DUPLICATE KEY UPDATE app_id = @appID";
                             await conn.ExecuteAsync(cacheCategoryAppRelations, paramInsert);
@@ -352,7 +349,7 @@ namespace GameAPILibrary.Resources.Data
                         string getTypeIDSql = "SELECT id FROM type WHERE name = @typeName";
                         int id = (await conn.QueryAsync<int>(getTypeIDSql, parameters)).FirstOrDefault();
 
-                        var paramApp = new { appID = app.Id, typeID = id };
+                        var paramApp = new { appID, typeID = id };
                         string updateAppTypeSql = "UPDATE app SET type_id = @typeID WHERE id = @appID ";
                         await conn.ExecuteAsync(updateAppTypeSql, paramApp);
                     }
@@ -370,7 +367,7 @@ namespace GameAPILibrary.Resources.Data
                         string getDevIDSql = "SELECT id FROM developer WHERE name = @devName";
                         int id = (await conn.QueryAsync<int>(getDevIDSql, parameters)).FirstOrDefault();
 
-                        var paramDev = new { appID = app.Id, devID = id };
+                        var paramDev = new { appID, devID = id };
                         string updateAppDevSql = "UPDATE app SET developer_id = @devID WHERE id = @appID ";
                         await conn.ExecuteAsync(updateAppDevSql, paramDev);
                     }
@@ -388,50 +385,38 @@ namespace GameAPILibrary.Resources.Data
                         string getPubIDSql = "SELECT id FROM publisher WHERE name = @pubName";
                         int id = (await conn.QueryAsync<int>(getPubIDSql, parameters)).FirstOrDefault();
 
-                        var paramPub = new { appID = app.Id, pubID = id };
+                        var paramPub = new { appID, pubID = id };
                         string updatePubSql = "UPDATE app SET publisher_id = @pubID WHERE id = @appID ";
                         await conn.ExecuteAsync(updatePubSql, paramPub);
                     }
                     catch (Exception ex) { Log(ex.Message); }
 
-
-                    //update release date
+                    //update app
                     try
                     {
-                        var parameters = new { comingSoon = comingSoon, date = releaseDate, appID = app.Id };
-                        string cacheRel = $"UPDATE app SET coming_soon = @comingSoon," +
-                            $" release_date = @date WHERE id = @appID";
-                        await conn.ExecuteAsync(cacheRel, parameters);
-                    }
-                    catch (Exception ex) { Log(ex.Message); }
-
-
-                    //update required age
-                    try
-                    {
-                        var parameters = new { age = app.RequiredAge, appID = app.Id, reviewScore = app.ReviewScore };
+                        var parameters = new { 
+                            appID,
+                            requiredAge,
+                            reviewScore,
+                            comingSoon,
+                            releaseDate,
+                            headerImage
+                        };
                         string cacheRel = $"UPDATE app" +
-                            $" SET required_age = @age," +
-                            $" review_score = @reviewScore" +
+                            $" SET required_age = @requiredAge," +
+                            $" review_score = @reviewScore," +
+                            $" coming_soon = @comingSoon," +
+                            $" release_date = @releaseDate," +
+                            $" header_image = @headerImage" +
                             $" WHERE id = @appID";
                         await conn.ExecuteAsync(cacheRel, parameters);
-                    }
-                    catch (Exception ex) { Log(ex.Message); }
-
-
-                    //Update header image
-                    try
-                    {
-                        var parameters = new { headerImage = app.HeaderImage, appID = app.Id };
-                        string cacheHeader = $"UPDATE app SET header_image = @headerImage WHERE id = @appID";
-                        await conn.ExecuteAsync(cacheHeader, parameters);
                     }
                     catch (Exception ex) { Log(ex.Message); }
 
                     //Update caching datetime manually
                     try
                     {
-                        var parameters = new { appID = app.Id };
+                        var parameters = new { appID };
                         string cacheHeader = $"UPDATE app SET last_caching_datetime = now() WHERE id = @appID";
                         await conn.ExecuteAsync(cacheHeader, parameters);
                     }
